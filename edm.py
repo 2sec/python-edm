@@ -321,9 +321,18 @@ struct timebits {
             # debug - save flight data
             # with open(self.fileName + '-' + str(fnum), 'wb') as f: f.write(flightdata)
 
-            self.parseFlight(fnum, flightdata, date, interval_secs)
+            convertEngineTemp = True
 
-            flights[i] = EDMFlight(fnum, date, flags, ('F' if isF(flags) else 'C'), interval_secs)
+            # no idea where the unit is given in the header! I'll test when needed
+            convertOilTemp = False
+
+
+            if convertEngineTemp:
+                convertEngineTemp = isF(flags)
+
+            self.parseFlight(fnum, flightdata, date, interval_secs, convertEngineTemp, convertOilTemp)
+
+            flights[i] = EDMFlight(fnum, date, flags, 'C', interval_secs)
 
             self.offset += flen
 
@@ -332,7 +341,7 @@ struct timebits {
 
 
 
-    def parseFlight(self, fnum, data, date, interval_secs):
+    def parseFlight(self, fnum, data, date, interval_secs, convertEngineTemp, convertOilTemp):
 
         print('extracting flight', fnum, 'date', date)
 
@@ -477,6 +486,16 @@ struct timebits {
                     value = new_values[index]
 
                 values[key] = value
+
+            def f2c(t): return (t - 32) * 5 / 9.0
+
+            if convertEngineTemp:
+                for key in [ 'EGT1', 'EGT2', 'EGT3', 'EGT4', 'EGT5', 'EGT6',
+                    'CHT1', 'CHT2', 'CHT3', 'CHT4', 'CHT5', 'CHT6',
+                    'CRB', 'CLD', 'OILT']:
+                    values[key] = f2c(values[key])
+            if convertOilTemp:
+                    values['OAT'] = f2c(values['OAT'])
 
 
             # convert to CSV
