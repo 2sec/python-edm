@@ -15,6 +15,15 @@ from sklearn import preprocessing
 
 
 
+def plot_loss(loss, val_loss):
+    plt.clf()
+    plt.plot(loss, label='loss')
+    plt.plot(val_loss, label='val_loss')
+    plt.xlabel('epoch')
+    plt.ylabel('error')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 
 
@@ -74,20 +83,12 @@ class KerasModel(Model):
 
       callbacks = [early_stopping]
 
-      history = self.model.fit(X_trn, y_trn, epochs=10, validation_data=(X_tst, y_tst), callbacks=callbacks)
-
-      def plot_loss(history):
-        plt.clf()
-        plt.plot(history.history['loss'], label='loss')
-        plt.plot(history.history['val_loss'], label='val_loss')
-        plt.xlabel('epoch')
-        plt.ylabel('error')
-        plt.legend()
-        plt.grid(True)
-        plt.show()
+      history = self.model.fit(X_trn, y_trn, epochs=1000, validation_data=(X_tst, y_tst), callbacks=callbacks)
 
       if plot: 
-        plot_loss(history)
+        loss = history.history['loss']
+        val_loss =  history.history['val_loss']
+        plot_loss(loss, val_loss)
 
 
     def Predict(self, X):
@@ -107,6 +108,12 @@ class XGBModel(Model):
 
     def Fit(self, X_trn, y_trn, X_tst, y_tst, plot=False):
         self.model.fit(X_trn, y_trn, eval_metric='rmse', eval_set=[(X_trn, y_trn), (X_tst, y_tst)], verbose=True, early_stopping_rounds=50)
+
+        if plot: 
+            results = self.model.evals_result()
+            loss = results['validation_0']['rmse']
+            val_loss = results['validation_1']['rmse']
+            plot_loss(loss, val_loss)
 
     def Predict(self, X):
         return self.model.predict(X).reshape(-1,1)

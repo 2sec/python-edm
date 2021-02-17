@@ -27,9 +27,6 @@ def plot_predictions(true_values, predictions):
   ax.plot([0, 1], [0, 1], transform=ax.transAxes)
   plt.show()
 
-X_scaler = preprocessing.MinMaxScaler()
-y_scaler = preprocessing.MinMaxScaler()
-
 
 if __name__ == "__main__":
 
@@ -37,8 +34,8 @@ if __name__ == "__main__":
 
   save = False
   load = True
-  retrain = False
-  plot = False
+  retrain = True
+  plot = True
 
 
   print('reading...')
@@ -148,6 +145,7 @@ if __name__ == "__main__":
         model.Build()
 
       if retrain:
+        print(plot, plot)
         model.Fit(X_trn, y_trn, X_tst, y_tst, plot)
 
       if save:
