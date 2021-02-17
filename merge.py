@@ -43,6 +43,9 @@ if __name__ == "__main__":
             rows = data.shape[0]
 
             if FlightDuration >= 30:
+                # ignore first 5 minutes of the flight
+                data = data[data['duration'] >= 5]
+                
                 cols = ['duration', 'month', 'OILP', 'OILT', 'OAT', 'FF', 'MAP', 'RPM', 'CRB', 'HP'] + cols
                 data = data[cols]
 
