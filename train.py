@@ -34,8 +34,8 @@ if __name__ == "__main__":
 
   save = False
   load = True
-  retrain = True
-  plot = True
+  retrain = False
+  plot = False
 
 
   print('reading...')
@@ -61,6 +61,7 @@ if __name__ == "__main__":
 
 
   #g = sns.pairplot(trn[['duration', 'month', 'CHT1', 'CHT3', 'EGT1', 'EGT3', 'FF', 'OILT', 'MAP', 'RPM', 'OAT']], diag_kind='kde')
+  #g.map_lower(sns.kdeplot, levels=4, color=".2")
   #plt.show()
 
 
@@ -105,8 +106,11 @@ if __name__ == "__main__":
       y_tst = tst_copy[predict_col]
       X_tst = tst_copy.drop([predict_col, remove_col], axis=1)
 
-      print(X_trn.describe())
-      print(y_trn.describe())
+      if not predictOnly:
+        print('trn info [%s]' % predict_col)
+        print(X_trn.describe())
+        print(y_trn.describe())
+      print('tst info [%s]' % predict_col)
       print(X_tst.describe())
       print(y_tst.describe())
 
@@ -174,7 +178,7 @@ if __name__ == "__main__":
     # the goal is to predict CHTs or EGTs from the other cylinders.
     # when predicting CHT for a given cylinder, the corresponding EGT is also removed from the training set
     # and vice versa
-
+    
     cht_col = 'CHT' + str(i)
     egt_col = 'EGT' + str(i)
 
@@ -189,13 +193,30 @@ if __name__ == "__main__":
 
   print('TEST set MAE CHT error = %0.6f' % global_cht_error)
   print('TEST set MAE EGT error = %0.6f' % global_egt_error)
+
+
+  max_CHT_error = 6
+  max_EGT_error = 30
+
   
 
   if True:
     print('saving...')
 
     for key, value in predictions.items():
-      tst[key+'P'] = value
+      pred = tst[key+'-PRED'] = value
+      diff = tst[key+'-DIFF'] = tst[key+'-PRED'] - tst[key]
+      diff_ma = tst[key+'-DIFF-MA6'] = diff.rolling(window=6).mean()
+
+      max_error = max_CHT_error if key.startswith('CHT') else max_EGT_error
+      diff_alert = tst[key+'-DIFF-ALERT'] = diff_ma > max_error
+
+      d = tst[diff_alert == True][['duration', key, key+'-PRED', key+'-DIFF']]
+      if(d.shape[0] >= 10): #there is at least 1 minute of unusual values
+        print(d.describe())
+
+
+
 
     tst.to_csv('flights_tstp.csv', float_format='%.2f', index=False)
 

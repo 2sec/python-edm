@@ -108,7 +108,6 @@ class XGBModel(Model):
 
     def Fit(self, X_trn, y_trn, X_tst, y_tst, plot=False):
         self.model.fit(X_trn, y_trn, eval_metric='rmse', eval_set=[(X_trn, y_trn), (X_tst, y_tst)], verbose=True, early_stopping_rounds=50)
-
         if plot: 
             results = self.model.evals_result()
             loss = results['validation_0']['rmse']
