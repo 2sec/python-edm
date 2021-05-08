@@ -4,6 +4,9 @@
 import config
 
 import pandas as pd
+pd.options.display.float_format = "{:.2f}".format
+
+
 import os
 import sys
 
@@ -199,7 +202,7 @@ if __name__ == "__main__":
   max_EGT_error = 30
 
   
-
+  
   if True:
     print('saving...')
 
@@ -209,9 +212,9 @@ if __name__ == "__main__":
       diff_ma = tst[key+'-DIFF-MA6'] = diff.rolling(window=6).mean()
 
       max_error = max_CHT_error if key.startswith('CHT') else max_EGT_error
-      diff_alert = tst[key+'-DIFF-ALERT'] = diff_ma > max_error
+      diff_alert = tst[key+'-DIFF-ALERT'] = (diff_ma > max_error).astype(int)
 
-      d = tst[diff_alert == True][['duration', key, key+'-PRED', key+'-DIFF']]
+      d = tst[diff_alert>0][['duration', key, key+'-PRED', key+'-DIFF']]
       if(d.shape[0] >= 10): #there is at least 1 minute of unusual values
         print(d.describe())
 

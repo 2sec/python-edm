@@ -46,8 +46,8 @@ if __name__ == "__main__":
                 # ignore first 7 and last 3 minutes of the flight
                 data = data[data['duration'] >= 7]
                 data = data[data['duration'] <= FlightDuration - 3]
-                
-                cols = ['duration', 'month', 'OILP', 'OILT', 'OAT', 'FF', 'MAP', 'RPM', 'CRB', 'HP'] + cols
+
+                cols = ['duration', 'month', 'OILP', 'OILT', 'OAT', 'FF', 'MAP', 'RPM', 'CRB', 'HP', 'GSPD'] + cols
                 data = data[cols]
 
                 print('Flight Date', date, '- Duration', FlightDuration, 'min', '- Rows', rows)

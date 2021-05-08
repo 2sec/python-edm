@@ -374,8 +374,11 @@ struct timebits {
             'EGT1': (0, 48), 'EGT2': (1, 49), 'EGT3':(2, 50), 'EGT4': (3, 51), 'EGT5': (4, 52), 'EGT6': (5, 53),
             'CHT1': 8, 'CHT2': 9, 'CHT3': 10, 'CHT4': 11, 'CHT5': 12, 'CHT6': 13,
             'CRB': 18, 'CLD': 14, 'OILT': 15, 'MARK': 16, 'OILP': 17, 'VOLT': 20, 'OAT': 21,
-            'USD': 22, 'FF': 23, 'HP': 30, 'MAP': 40, 'RPM': (41,42), 'HOURS': (78, 79)
+            'USD': 22, 'FF': 23, 'HP': 30, 'MAP': 40, 'RPM': (41,42), 'HOURS': (78, 79), 
+            'GSPD': 85
         }
+
+        #TODO: locate high byte for ground speed (GSPD) which must surely exists
 
         NUM_FIELDS = 128
         DEFAULT_VALUE = 0xF0
@@ -464,15 +467,17 @@ struct timebits {
 
                     if negative: diff = -diff
 
-                    if value is None: value = default_values[k]
+                    if value is None and diff == 0:
+                        pass
+                    else:
+                        if value is None: value = default_values[k]
 
-                    value += diff
+                        value += diff
 
                     previous_values[k] = value
 
                 if value is None: value = 0
                 new_values[k] = value
-
 
 
             # save values
@@ -496,6 +501,10 @@ struct timebits {
                     values[key] = f2c(values[key])
             if convertOilTemp:
                     values['OAT'] = f2c(values['OAT'])
+
+            if values['GSPD'] < 0: # this happens sometimes, dunno why
+                values['GSPD'] = 0 
+
 
 
             # convert to CSV
