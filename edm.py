@@ -378,6 +378,8 @@ struct timebits {
             'GSPD': 85
         }
 
+        GSPD_index = labels['GSPD']
+
         #TODO: locate high byte for ground speed (GSPD) which must surely exists
 
         NUM_FIELDS = 128
@@ -473,8 +475,12 @@ struct timebits {
                         if value is None: value = default_values[k]
 
                         value += diff
+                        # EDM bug
+                        if k == GSPD_index and value == 150 and previous_values[k] is None: value = None
+                        if k == GSPD_index and diff == -150 and previous_values[k] is None: value = 0
 
-                    previous_values[k] = value
+                        previous_values[k] = value
+
 
                 if value is None: value = 0
                 new_values[k] = value
@@ -492,7 +498,7 @@ struct timebits {
 
                 values[key] = value
 
-            def f2c(t): return (t - 32) * 5 / 9.0
+            def f2c(t): return round((t - 32) * 5 / 9.0, 2)
 
             if convertEngineTemp:
                 for key in [ 'EGT1', 'EGT2', 'EGT3', 'EGT4', 'EGT5', 'EGT6',
@@ -504,8 +510,6 @@ struct timebits {
 
             if values['GSPD'] < 0: # this happens sometimes, dunno why
                 values['GSPD'] = 0 
-
-
 
             # convert to CSV
             row = ''
