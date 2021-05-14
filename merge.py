@@ -21,6 +21,20 @@ if __name__ == "__main__":
 
         flights = None
 
+        cht_cols = []
+        egt_cols = []
+        for i in range(0, config.NUMCYLS):
+            egt_cols.append('EGT' + str(i+1))
+            cht_cols.append('CHT' + str(i+1))
+
+        cols = []
+        cols.extend(cht_cols)
+        cols.extend(egt_cols)
+
+        # columns used for training
+        cols = ['duration', 'month', 'OILP', 'OILT', 'OAT', 'FF', 'MAP', 'RPM', 'CRB', 'HP', 'GSPD'] + cols
+
+
         for f in files:
             print('reading', f)
             data = pd.read_csv(csvdir + f, delimiter = ',')
@@ -31,13 +45,7 @@ if __name__ == "__main__":
             date = data['date'].iloc[0]
             data['date'] -= date
 
-            cols = []
-            for i in range(0, config.NUMCYLS):
-                cols.append('EGT' + str(i+1))
-                cols.append('CHT' + str(i+1))
-
             data['duration'] = (data['date'].dt.total_seconds() // 60).astype('int32')
-
 
             FlightDuration = data['duration'].iloc[-1]
             rows = data.shape[0]
@@ -47,8 +55,18 @@ if __name__ == "__main__":
                 data = data[data['duration'] >= 7]
                 data = data[data['duration'] <= FlightDuration - 3]
 
-                cols = ['duration', 'month', 'OILP', 'OILT', 'OAT', 'FF', 'MAP', 'RPM', 'CRB', 'HP', 'GSPD'] + cols
                 data = data[cols]
+
+                #EGT_DIFF and CHT_DIFF cannot be used for ML training as it could introduce a leak.
+                #they could be used however for anomalies detection 
+
+                cht_max = data[cht_cols].max(axis=1)
+                cht_min = data[cht_cols].min(axis=1)
+                data['CHT_DIFF'] = cht_max - cht_min
+
+                egt_max = data[egt_cols].max(axis=1)
+                egt_min = data[egt_cols].min(axis=1)
+                data['EGT_DIFF'] = egt_max - egt_min
 
                 print('Flight Date', date, '- Duration', FlightDuration, 'min', '- Rows', rows)
 
@@ -57,11 +75,14 @@ if __name__ == "__main__":
                 else:
                     flights = pd.concat([flights, data])
 
-        flights.to_csv('flights.csv', float_format='%.2f', index=False)
+        flights.to_csv('flights_allcolumns.csv', float_format='%.2f', index=False)
 
         print(flights.info())
         print(flights.describe())
 
+        #only keep columns for training
+        flights = flights[cols]
+        flights.to_csv('flights.csv', float_format='%.2f', index=False)
 
         flights_trn, flights_tst = train_test_split(flights, test_size=0.1, random_state=config.random_state)        
 
