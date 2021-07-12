@@ -8,6 +8,9 @@ from datetime import datetime
 from datetime import timedelta
 import struct
 import sys
+import os
+
+import config
 
 # see **NEW** comments below
 def isF(flags): return (flags >> 28) & 1
@@ -243,7 +246,7 @@ $L = last header record
 
 
 
-    def parseFlights(self):
+    def parseFlights(self, additional_columns):
 
         '''
 The flight header follows immediately after the $L record, and is as follows:
@@ -330,7 +333,7 @@ struct timebits {
             if convertEngineTemp:
                 convertEngineTemp = isF(flags)
 
-            self.parseFlight(fnum, flightdata, date, interval_secs, convertEngineTemp, convertOilTemp)
+            self.parseFlight(fnum, flightdata, date, interval_secs, convertEngineTemp, convertOilTemp, additional_columns)
 
             flights[i] = EDMFlight(fnum, date, flags, 'C', interval_secs)
 
@@ -341,7 +344,7 @@ struct timebits {
 
 
 
-    def parseFlight(self, fnum, data, date, interval_secs, convertEngineTemp, convertOilTemp):
+    def parseFlight(self, fnum, data, date, interval_secs, convertEngineTemp, convertOilTemp, additional_columns):
 
         print('extracting flight', fnum, 'date', date)
 
@@ -404,11 +407,13 @@ struct timebits {
         for key in labels:
             csv_header += ',' + key
 
+        if additional_columns:
+            for key in additional_columns:
+                csv_header += ',' + key
+
         csv_header += '\n'
 
-
         count = 0
-
         offset = 0
         flen = len(data)
         while offset < flen - struct_flightdata.size:
@@ -511,6 +516,11 @@ struct timebits {
             if values['GSPD'] < 0: # this happens sometimes, dunno why
                 values['GSPD'] = 0 
 
+            if additional_columns:
+                for key, fn in additional_columns.items():
+                    values[key] = fn(fnum, date, values)
+
+
             # convert to CSV
             row = ''
             for key, value in values.items():
@@ -536,22 +546,30 @@ if __name__ == "__main__":
 
     argc = len(sys.argv)
     if(argc > 1):
-        fileName = sys.argv[1]
+        inputDir = sys.argv[1]
         outDir = sys.argv[2]
 
-        data = EDMData(fileName, outDir)
-        data.read()
-        data.parseHeader()
+        if not inputDir.endswith('/'): inputDir += '/'
+        files = os.listdir(inputDir)
+        files = [f for f in files if f.endswith('.JPI')]
 
-        print(data.header)
-        for key, value in data.config.items():
-            print(key, value)
+        for f in files:
+            print(inputDir + f)
+            data = EDMData(inputDir + f, outDir)
+            data.read()
+            data.parseHeader()
 
-        print('')
+            print(data.header)
+            for key, value in data.config.items():
+                print(key, value)
 
-        data.parseFlights()
-        #for flight in data.flights:
-        #    print(vars(flight))
+            print('')
+
+
+
+            data.parseFlights(config.additional_columns)
+            #for flight in data.flights:
+            #    print(vars(flight))
 
 
 

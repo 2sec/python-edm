@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import config
+import pickle
 
 import numpy as np
 import tensorflow as tf
@@ -10,6 +11,7 @@ import matplotlib.pyplot as plt
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
+from sklearn.ensemble import RandomForestRegressor
 
 from sklearn import preprocessing
 
@@ -116,6 +118,27 @@ class XGBModel(Model):
 
     def Predict(self, X):
         return self.model.predict(X).reshape(-1,1)
+
+
+class RandomForestModel(Model):
+    def Build(self):
+        self.model = RandomForestRegressor(n_estimators=100, criterion='mse', random_state=config.random_state, n_jobs=12, verbose=1)
+
+    def Load(self, fileName):
+        with open(fileName + '.rf', 'rb') as f:
+            self.model = pickle.load(f)
+
+    def Save(self, fileName):
+        with open(fileName + '.rf', 'wb') as f:
+            pickle.dump(self.model, f)    
+
+    def Fit(self, X_trn, y_trn, X_tst, y_tst, plot=False):
+        self.model.fit(X_trn, y_trn)
+        if plot: 
+            pass
+
+    def Predict(self, X):
+        return self.model.predict(X).reshape(-1,1)        
 
 
 class MultiModel(Model):

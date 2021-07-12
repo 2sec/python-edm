@@ -70,9 +70,10 @@ if __name__ == "__main__":
 
   # the model will predict CHT and EGT temperatures for one cylinder based on the measurements of the other cylinders and other values such as MAP, RPM, OAT, etc
 
-  model = models.MultiModel([models.KerasModel(), models.XGBModel()])
+  model = models.MultiModel([models.KerasModel(), models.XGBModel(), models.RandomForestModel()])
   #model = models.KerasModel()
   #model = models.XGBModel()
+  #model = models.RandomForestModel()
 
 
   if not load and not retrain:
@@ -198,7 +199,7 @@ if __name__ == "__main__":
   print('TEST set MAE EGT error = %0.6f' % global_egt_error)
 
 
-  max_CHT_error = 6
+  max_CHT_error = 10
   max_EGT_error = 30
 
   
@@ -219,7 +220,13 @@ if __name__ == "__main__":
         print(d.describe())
 
 
+    d = None
+    for key, value in predictions.items():
+      d = tst['DIFF-ALERT'] if 'DIFF-ALERT' in tst.columns else 0
+      tst['DIFF-ALERT'] = d + tst[key+'-DIFF-ALERT']
 
+
+    print(tst.describe())
 
     tst.to_csv('flights_tstp.csv', float_format='%.2f', index=False)
 
