@@ -32,7 +32,7 @@ if __name__ == "__main__":
         cols.extend(egt_cols)
 
         # columns used for training
-        cols = ['duration', 'month', 'OILP', 'OILT', 'OAT', 'FF', 'MAP', 'RPM', 'CRB', 'HP', 'GSPD'] + cols
+        cols = ['duration', 'month', 'OILP', 'OILT', 'OAT', 'FF', 'MAP', 'RPM', 'CRB', 'HP', 'GSPD' ] + [key for key in config.additional_columns] + cols
 
 
         for f in files:
@@ -46,6 +46,7 @@ if __name__ == "__main__":
             data['date'] -= date
 
             data['duration'] = (data['date'].dt.total_seconds() // 60).astype('int32')
+
 
             FlightDuration = data['duration'].iloc[-1]
             rows = data.shape[0]
