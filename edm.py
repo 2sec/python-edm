@@ -399,7 +399,7 @@ struct timebits {
 
 
         previous_values = [None] * NUM_FIELDS
-
+        GSPD_bug = True
 
         csv_header = 'date'
         csv_values = ''
@@ -480,14 +480,18 @@ struct timebits {
                         if value is None: value = default_values[k]
 
                         value += diff
-                        # EDM bug
-                        if k == GSPD_index and value == 150 and previous_values[k] is None: value = None
-                        if k == GSPD_index and diff == -150 and previous_values[k] is None: value = 0
 
                         previous_values[k] = value
 
 
                 if value is None: value = 0
+
+                if k == GSPD_index:
+                    if value == 150 and GSPD_bug:
+                        value = 0
+                    elif value:
+                        GSPD_bug = False
+
                 new_values[k] = value
 
 

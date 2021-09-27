@@ -199,8 +199,6 @@ if __name__ == "__main__":
   print('TEST set MAE EGT error = %0.6f' % global_egt_error)
 
 
-  max_CHT_error = 10
-  max_EGT_error = 30
 
   
   
@@ -212,12 +210,17 @@ if __name__ == "__main__":
       diff = tst[key+'-DIFF'] = tst[key+'-PRED'] - tst[key]
       diff_ma = tst[key+'-DIFF-MA6'] = diff.rolling(window=6).mean()
 
-      max_error = max_CHT_error if key.startswith('CHT') else max_EGT_error
+      max_error = config.max_CHT_error if key.startswith('CHT') else config.max_EGT_error
       diff_alert = tst[key+'-DIFF-ALERT'] = (diff_ma > max_error).astype(int)
 
       d = tst[diff_alert>0][['duration', key, key+'-PRED', key+'-DIFF']]
       if(d.shape[0] >= 10): #there is at least 1 minute of unusual values
-        print(d.describe())
+        d = d.describe()
+        p25_diff = d[d.columns[2]]['25%'] - d[d.columns[1]]['25%']
+        if p25_diff < 0:
+          print(key)
+          print('ALERT')
+          print(d)
 
 
     d = None
@@ -226,6 +229,7 @@ if __name__ == "__main__":
       tst['DIFF-ALERT'] = d + tst[key+'-DIFF-ALERT']
 
 
+    print('TEST set')
     print(tst.describe())
 
     tst.to_csv('flights_tstp.csv', float_format='%.2f', index=False)
